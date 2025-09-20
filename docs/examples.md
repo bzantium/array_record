@@ -64,6 +64,95 @@ with array_record_data_source.ArrayRecordDataSource('users.array_record') as ds:
         print(f"User {user['id']}: {user['name']} ({user['age']} years old)")
 ```
 
+### Working with tf.train.Example
+
+ArrayRecord integrates seamlessly with TensorFlow's `tf.train.Example` format for structured ML data:
+
+```python
+import tensorflow as tf
+import grain
+import dataclasses
+from array_record.python import array_record_module, array_record_data_source
+
+# Writing tf.train.Example records
+def create_tf_example(text_data, is_tokens=False):
+    if is_tokens:
+        # Integer tokens
+        features = {'text': tf.train.Feature(int64_list=tf.train.Int64List(value=text_data))}
+    else:
+        # String text
+        features = {'text': tf.train.Feature(bytes_list=tf.train.BytesList(value=[text_data.encode('utf-8')]))}
+    
+    return tf.train.Example(features=tf.train.Features(feature=features))
+
+# Write examples to ArrayRecord
+writer = array_record_module.ArrayRecordWriter('tf_examples.array_record', 'group_size:1')
+
+# Write string examples
+for text in ["The quick brown fox", "Machine learning is powerful", "ArrayRecord stores data efficiently"]:
+    example = create_tf_example(text)
+    writer.write(example.SerializeToString())  # Already bytes, no .encode() needed
+
+# Write token examples
+for tokens in [[1, 2, 3, 4, 5], [6, 7, 8, 9], [10, 11, 12, 13, 14, 15]]:
+    example = create_tf_example(tokens, is_tokens=True)
+    writer.write(example.SerializeToString())
+
+writer.close()
+print("Created tf.train.Example dataset with string and token examples")
+
+# MaxText-style parsing with Grain
+@dataclasses.dataclass
+class ParseFeatures(grain.MapTransform):
+    """Parse tf.train.Example records (from MaxText)."""
+    def __init__(self, data_columns, tokenize):
+        self.data_columns = data_columns
+        self.dtype = tf.string if tokenize else tf.int64
+
+    def map(self, element):
+        return tf.io.parse_example(
+            element,
+            {col: tf.io.FixedLenSequenceFeature([], dtype=self.dtype, allow_missing=True) 
+             for col in self.data_columns}
+        )
+
+@dataclasses.dataclass
+class NormalizeFeatures(grain.MapTransform):
+    """Normalize features (from MaxText)."""
+    def __init__(self, column_names, tokenize):
+        self.column_names = column_names
+        self.tokenize = tokenize
+
+    def map(self, element):
+        if self.tokenize:
+            return {col: element[col].numpy()[0].decode() for col in self.column_names}
+        else:
+            return {col: element[col].numpy() for col in self.column_names}
+
+# Create MaxText-style training pipeline for strings
+data_source = array_record_data_source.ArrayRecordDataSource('tf_examples.array_record')
+string_dataset = (
+    grain.MapDataset.source(data_source)
+    .map(ParseFeatures(['text'], tokenize=True))      # Parse tf.train.Example
+    .map(NormalizeFeatures(['text'], tokenize=True))  # Normalize features
+    .batch(batch_size=2)
+    .shuffle(seed=42)
+)
+
+# Create MaxText-style training pipeline for tokens
+token_dataset = (
+    grain.MapDataset.source(data_source)
+    .map(ParseFeatures(['text'], tokenize=False))     # Parse tf.train.Example  
+    .map(NormalizeFeatures(['text'], tokenize=False)) # Normalize features
+    .batch(batch_size=2)
+    .shuffle(seed=42)
+)
+
+print("Created MaxText-style pipelines for both string and token data")
+```
+
+This example demonstrates the complete workflow for using tf.train.Example with ArrayRecord and MaxText-style data processing, supporting both string text and integer token formats.
+
 ## Machine Learning Examples
 
 ### Storing Image Data
