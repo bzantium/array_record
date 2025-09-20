@@ -45,7 +45,7 @@ setup(
     extras_require={'beam': BEAM_EXTRAS, 'test': TEST_EXTRAS},
     url='https://github.com/bzantium/array_record',
     project_urls={
-        'Documentation': 'https://arrayrecord.readthedocs.io',
+        'Documentation': 'https://array-record.readthedocs.io',
         'Bug Reports': 'https://github.com/bzantium/array_record/issues',
         'Source': 'https://github.com/bzantium/array_record',
     },

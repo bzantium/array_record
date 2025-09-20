@@ -112,7 +112,7 @@ pip install array-record-python
 1. Go to [Read the Docs](https://readthedocs.org/)
 2. Sign in with your GitHub account
 3. Import your project: `bzantium/array_record`
-4. The project will be available at `https://arrayrecord.readthedocs.io`
+4. The project will be available at `https://array-record.readthedocs.io`
 
 ### 2. Configuration
 
@@ -258,6 +258,6 @@ jobs:
 - [ ] Package installs correctly: `pip install array-record-python`
 - [ ] Basic functionality works
 - [ ] README displays correctly on PyPI
-- [ ] Documentation is accessible at `arrayrecord.readthedocs.io`
+- [ ] Documentation is accessible at `array-record.readthedocs.io`
 
 Your ArrayRecord Python package is now ready for the community! 🎉

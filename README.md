@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/array-record-python.svg)](https://badge.fury.io/py/array-record-python)
 [![Python](https://img.shields.io/pypi/pyversions/array-record-python.svg)](https://pypi.org/project/array-record-python/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Documentation](https://readthedocs.org/projects/arrayrecord/badge/?version=latest)](https://arrayrecord.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://readthedocs.org/projects/arrayrecord/badge/?version=latest)](https://array-record.readthedocs.io/en/latest/?badge=latest)
 
 **ArrayRecord** is a high-performance file format designed for machine learning workloads, offering parallel I/O, random access by record index, and efficient compression. Built on top of [Riegeli](https://github.com/google/riegeli), ArrayRecord provides a new frontier of IO efficiency for training and evaluating ML models.
 
@@ -359,11 +359,11 @@ def store_multimodal_data(output_file, samples):
 
 ## 📖 Documentation
 
-- **[Full Documentation](https://arrayrecord.readthedocs.io)** - Complete API reference and guides
-- **[Quick Start Guide](https://arrayrecord.readthedocs.io/en/latest/quickstart.html)** - Get started quickly
-- **[Performance Guide](https://arrayrecord.readthedocs.io/en/latest/performance.html)** - Optimization strategies
-- **[Apache Beam Integration](https://arrayrecord.readthedocs.io/en/latest/beam_integration.html)** - Large-scale processing
-- **[Examples](https://arrayrecord.readthedocs.io/en/latest/examples.html)** - Real-world use cases
+- **[Full Documentation](https://array-record.readthedocs.io)** - Complete API reference and guides
+- **[Quick Start Guide](https://array-record.readthedocs.io/en/latest/quickstart.html)** - Get started quickly
+- **[Performance Guide](https://array-record.readthedocs.io/en/latest/performance.html)** - Optimization strategies
+- **[Apache Beam Integration](https://array-record.readthedocs.io/en/latest/beam_integration.html)** - Large-scale processing
+- **[Examples](https://array-record.readthedocs.io/en/latest/examples.html)** - Real-world use cases
 
 ## 🛠️ Development
 
@@ -387,7 +387,7 @@ pytest python/ -v
 
 ### Contributing
 
-We welcome contributions! Please see our [Contributing Guide](https://arrayrecord.readthedocs.io/en/latest/contributing.html) for details.
+We welcome contributions! Please see our [Contributing Guide](https://array-record.readthedocs.io/en/latest/contributing.html) for details.
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
