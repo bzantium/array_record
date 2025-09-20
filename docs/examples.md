@@ -718,4 +718,240 @@ for record in tech_records[:3]:
     print()
 ```
 
+## MaxText LLM Training Integration
+
+This example shows how to use ArrayRecord with [MaxText](https://github.com/AI-Hypercomputer/maxtext) for efficient large language model training, leveraging Grain for data processing:
+
+```python
+import json
+import numpy as np
+import grain
+from array_record.python import array_record_module, array_record_data_source
+
+def create_llm_pretraining_dataset():
+    """Create a large-scale pretraining dataset for LLMs using ArrayRecord."""
+    
+    # Use group_size:1 for maximum random access performance during training
+    writer = array_record_module.ArrayRecordWriter(
+        'llm_pretraining.array_record',
+        'group_size:1,brotli:6'  # Fast random access + moderate compression
+    )
+    
+    # Simulate tokenized text data (replace with your actual tokenizer)
+    vocab_size = 32000
+    max_sequence_length = 2048
+    
+    # Generate sample training data
+    num_examples = 100000
+    
+    for i in range(num_examples):
+        # Simulate tokenized text sequence
+        sequence_length = np.random.randint(512, max_sequence_length + 1)
+        input_ids = np.random.randint(1, vocab_size, size=sequence_length).tolist()
+        
+        # Create training example
+        example = {
+            'input_ids': input_ids,
+            'attention_mask': [1] * sequence_length,  # All tokens are real
+            'position_ids': list(range(sequence_length)),
+            'sequence_length': sequence_length,
+            'document_id': f"doc_{i // 100}",  # Multiple sequences per document
+            'metadata': {
+                'source': 'web_crawl' if i % 3 == 0 else 'books',
+                'language': 'en',
+                'quality_score': np.random.uniform(0.7, 1.0)
+            }
+        }
+        
+        # Write as JSON bytes
+        writer.write(json.dumps(example).encode('utf-8'))
+        
+        if i % 10000 == 0:
+            print(f"Created {i:,} training examples...")
+    
+    writer.close()
+    print(f"✅ Created LLM pretraining dataset with {num_examples:,} examples")
+
+def create_maxtext_data_pipeline(
+    data_path: str,
+    batch_size: int = 128,
+    max_sequence_length: int = 2048,
+    shuffle_buffer_size: int = 10000
+):
+    """Create MaxText-compatible data pipeline using ArrayRecord + Grain."""
+    
+    # ArrayRecord data source - optimized for random access
+    data_source = array_record_data_source.ArrayRecordDataSource(data_path)
+    print(f"📊 Loaded dataset with {len(data_source):,} examples")
+    
+    def parse_and_process_example(raw_bytes):
+        """Parse JSON and prepare for training."""
+        example = json.loads(raw_bytes.decode('utf-8'))
+        
+        # Extract sequences
+        input_ids = example['input_ids']
+        attention_mask = example['attention_mask']
+        
+        # Pad or truncate to max_sequence_length
+        if len(input_ids) > max_sequence_length:
+            input_ids = input_ids[:max_sequence_length]
+            attention_mask = attention_mask[:max_sequence_length]
+        else:
+            padding_length = max_sequence_length - len(input_ids)
+            input_ids.extend([0] * padding_length)  # 0 = PAD token
+            attention_mask.extend([0] * padding_length)  # 0 = ignore
+        
+        # For causal LM, labels are input_ids shifted by 1
+        labels = input_ids[1:] + [-100]  # -100 = ignore in loss
+        
+        return {
+            'input_ids': np.array(input_ids, dtype=np.int32),
+            'attention_mask': np.array(attention_mask, dtype=np.int32),
+            'labels': np.array(labels, dtype=np.int32),
+            'sequence_length': example['sequence_length']
+        }
+    
+    def quality_filter(example_bytes):
+        """Filter examples by quality score."""
+        example = json.loads(example_bytes.decode('utf-8'))
+        return example['metadata']['quality_score'] > 0.8
+    
+    # Create Grain dataset pipeline (MaxText style)
+    dataset = (
+        grain.MapDataset.source(data_source)
+        .filter(quality_filter)  # Filter high-quality examples
+        .map(parse_and_process_example)  # Parse and pad sequences
+        .shuffle(seed=42, buffer_size=shuffle_buffer_size)  # Shuffle for training
+        .batch(batch_size)  # Batch for efficient training
+        .prefetch(4)  # Prefetch batches to prevent data loading bottlenecks
+    )
+    
+    return dataset
+
+def simulate_maxtext_training_loop():
+    """Simulate MaxText training loop with ArrayRecord data pipeline."""
+    
+    print("🚀 Starting MaxText-style LLM training simulation...")
+    
+    # Create pretraining dataset
+    create_llm_pretraining_dataset()
+    
+    # Create data pipeline
+    train_dataset = create_maxtext_data_pipeline(
+        'llm_pretraining.array_record',
+        batch_size=64,  # Adjust based on your hardware
+        max_sequence_length=1024,
+        shuffle_buffer_size=50000
+    )
+    
+    # Training loop
+    total_tokens = 0
+    
+    for step, batch in enumerate(train_dataset):
+        # Batch shapes:
+        # - input_ids: [batch_size, sequence_length]
+        # - attention_mask: [batch_size, sequence_length]
+        # - labels: [batch_size, sequence_length]
+        
+        batch_size, seq_len = batch['input_ids'].shape
+        tokens_in_batch = np.sum(batch['attention_mask'])  # Count non-padded tokens
+        total_tokens += tokens_in_batch
+        
+        print(f"Step {step:,}: "
+              f"Batch size={batch_size}, "
+              f"Seq len={seq_len}, "
+              f"Tokens={tokens_in_batch:,}, "
+              f"Total tokens={total_tokens:,}")
+        
+        # In real MaxText training, you would:
+        # 1. Forward pass through the model
+        # 2. Compute loss (cross-entropy on labels)
+        # 3. Backward pass and optimizer step
+        # 4. Log metrics and checkpoints
+        
+        # Example pseudo-code:
+        # logits = model(batch['input_ids'], batch['attention_mask'])
+        # loss = compute_cross_entropy_loss(logits, batch['labels'])
+        # loss.backward()
+        # optimizer.step()
+        
+        if step >= 100:  # Demo: stop after 100 steps
+            break
+    
+    print(f"✅ Training simulation completed!")
+    print(f"📈 Processed {total_tokens:,} tokens across {step + 1} steps")
+
+def benchmark_random_access_performance():
+    """Benchmark random access performance with different configurations."""
+    
+    print("🔬 Benchmarking ArrayRecord configurations for LLM training...")
+    
+    import time
+    
+    # Test different configurations
+    configs = [
+        ('group_size:1', 'Maximum random access'),
+        ('group_size:100,brotli:6', 'Balanced performance'),
+        ('group_size:1000,brotli:9', 'Maximum compression')
+    ]
+    
+    for config, description in configs:
+        print(f"\n📊 Testing: {description} ({config})")
+        
+        # Create test dataset
+        filename = f'benchmark_{config.replace(":", "_").replace(",", "_")}.array_record'
+        writer = array_record_module.ArrayRecordWriter(filename, config)
+        
+        # Write test data
+        for i in range(10000):
+            example = {
+                'input_ids': list(range(i, i + 512)),  # 512 tokens
+                'labels': list(range(i + 1, i + 513))
+            }
+            writer.write(json.dumps(example).encode('utf-8'))
+        writer.close()
+        
+        # Benchmark random access
+        data_source = array_record_data_source.ArrayRecordDataSource(filename)
+        
+        # Random access test
+        indices = np.random.randint(0, len(data_source), size=1000)
+        
+        start_time = time.time()
+        for idx in indices:
+            _ = data_source[idx]
+        random_access_time = time.time() - start_time
+        
+        print(f"  Random access: {random_access_time:.3f}s for 1000 reads")
+        print(f"  Avg per read: {random_access_time * 1000 / 1000:.3f}ms")
+
+# Run the complete example
+if __name__ == "__main__":
+    simulate_maxtext_training_loop()
+    benchmark_random_access_performance()
+```
+
+### Key Benefits for LLM Training
+
+**🚀 Performance Advantages:**
+- **Ultra-fast random access** with `group_size:1` for efficient shuffling
+- **Parallel data loading** doesn't bottleneck GPU training
+- **Memory efficient** - only loads needed data, crucial for large models
+- **Scalable** to datasets with billions of tokens
+
+**🔧 MaxText Integration:**
+- **Seamless Grain compatibility** for data pipeline composition
+- **Flexible preprocessing** with map/filter/batch operations
+- **Quality filtering** and data validation built-in
+- **Production-ready** - used by Google's MaxText for real LLM training
+
+**📊 Real-world Usage:**
+Based on the [MaxText implementation](https://github.com/AI-Hypercomputer/maxtext/blob/main/src/MaxText/input_pipeline/_grain_data_processing.py), this pattern is used for training large language models with:
+- Datasets containing billions of tokens
+- Efficient random sampling for training stability
+- High-throughput data loading to keep GPUs/TPUs busy
+- Flexible data preprocessing and augmentation
+
+This combination of ArrayRecord + Grain + MaxText provides a production-ready solution for large-scale language model training.
+
 This comprehensive set of examples covers the major use cases for ArrayRecord, from basic file operations to advanced machine learning workflows and integrations with popular frameworks. Each example includes practical code that can be adapted for specific needs.

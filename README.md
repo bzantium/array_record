@@ -238,6 +238,122 @@ for batch in dataset:
     pass
 ```
 
+### MaxText LLM Training Pipeline
+
+ArrayRecord integrates seamlessly with [MaxText](https://github.com/AI-Hypercomputer/maxtext) for large language model training, providing efficient data loading through Grain:
+
+```python
+import json
+import grain
+from array_record.python import array_record_module, array_record_data_source
+
+# 1. Prepare LLM training data in ArrayRecord format
+def create_llm_training_data():
+    """Create ArrayRecord dataset optimized for LLM training."""
+    writer = array_record_module.ArrayRecordWriter(
+        'llm_training_data.array_record',
+        'group_size:1,brotli:6'  # Fast random access for training
+    )
+    
+    # Sample training data (replace with your tokenized text)
+    training_examples = [
+        {
+            'input_ids': [1, 2, 3, 4, 5],  # Tokenized input
+            'attention_mask': [1, 1, 1, 1, 1],
+            'labels': [2, 3, 4, 5, 6],  # Next token prediction
+            'sequence_length': 5
+        },
+        # Add more examples...
+    ]
+    
+    for example in training_examples:
+        writer.write(json.dumps(example).encode('utf-8'))
+    
+    writer.close()
+    print(f"Created LLM training dataset with {len(training_examples)} examples")
+
+# 2. MaxText-style data processing with Grain
+def create_maxtext_data_pipeline(data_path: str, batch_size: int = 32):
+    """Create MaxText-compatible data pipeline using ArrayRecord + Grain."""
+    
+    # ArrayRecord data source for efficient random access
+    data_source = array_record_data_source.ArrayRecordDataSource(data_path)
+    
+    def parse_example(raw_bytes):
+        """Parse JSON-encoded training example."""
+        example = json.loads(raw_bytes.decode('utf-8'))
+        return {
+            'input_ids': example['input_ids'],
+            'attention_mask': example['attention_mask'],
+            'labels': example['labels']
+        }
+    
+    def pad_to_max_length(example, max_length=512):
+        """Pad sequences to maximum length."""
+        for key in ['input_ids', 'attention_mask', 'labels']:
+            seq = example[key]
+            if len(seq) < max_length:
+                # Pad with zeros (adjust padding token as needed)
+                example[key] = seq + [0] * (max_length - len(seq))
+            else:
+                example[key] = seq[:max_length]
+        return example
+    
+    # Create Grain dataset pipeline
+    dataset = (
+        grain.MapDataset.source(data_source)
+        .map(parse_example)  # Parse JSON
+        .map(lambda x: pad_to_max_length(x, max_length=512))  # Pad sequences
+        .shuffle(seed=42, buffer_size=10000)  # Shuffle for training
+        .batch(batch_size)  # Batch for efficient training
+        .prefetch(2)  # Prefetch batches
+    )
+    
+    return dataset
+
+# 3. Usage in MaxText training loop
+def train_with_maxtext_pipeline():
+    """Example training loop using MaxText-style data pipeline."""
+    
+    # Create training data
+    create_llm_training_data()
+    
+    # Create data pipeline
+    train_dataset = create_maxtext_data_pipeline(
+        'llm_training_data.array_record',
+        batch_size=64
+    )
+    
+    # Training loop (simplified)
+    for step, batch in enumerate(train_dataset):
+        # batch contains:
+        # - input_ids: [batch_size, seq_length]
+        # - attention_mask: [batch_size, seq_length] 
+        # - labels: [batch_size, seq_length]
+        
+        print(f"Step {step}: Processing batch with {len(batch['input_ids'])} examples")
+        
+        # Forward pass, loss computation, backprop would go here
+        # model_output = model(batch['input_ids'], batch['attention_mask'])
+        # loss = compute_loss(model_output, batch['labels'])
+        
+        if step >= 10:  # Demo: stop after 10 steps
+            break
+
+# Run the example
+train_with_maxtext_pipeline()
+```
+
+**Benefits of ArrayRecord + Grain + MaxText:**
+
+- **🚀 Fast Random Access**: `group_size:1` enables instant access to any training example
+- **🔄 Efficient Shuffling**: Grain's shuffle works seamlessly with ArrayRecord's random access
+- **📊 Scalable**: Handle datasets with billions of tokens efficiently
+- **🎯 Memory Efficient**: Only load needed data, perfect for large models
+- **⚡ High Throughput**: Parallel data loading doesn't bottleneck training
+
+This combination is used in production by [MaxText](https://github.com/AI-Hypercomputer/maxtext) for training large language models efficiently.
+
 ### PyTorch
 
 ```python
