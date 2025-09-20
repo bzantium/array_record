@@ -227,7 +227,7 @@ Reader Configuration
 ~~~~~~~~~~~~~~~~~~~~
 
 When reading ArrayRecord files in Beam pipelines, you can use the standard
-ArrayRecord Python API within your DoFns:
+ArrayRecord API within your DoFns:
 
 .. code-block:: python
 

@@ -1,7 +1,7 @@
-ArrayRecord Python - High-Performance Data Storage
+ArrayRecord - High-Performance Data Storage
 ==================================================
 
-ArrayRecord Python is a high-performance file format designed for machine learning workloads, derived from `Riegeli <https://github.com/google/riegeli>`_ and achieving a new frontier of IO efficiency. ArrayRecord supports parallel read, write, and random access by record index, making it ideal for machine learning workloads and large-scale data processing.
+ArrayRecord is a high-performance file format designed for machine learning workloads, derived from `Riegeli <https://github.com/google/riegeli>`_ and achieving a new frontier of IO efficiency. ArrayRecord supports parallel read, write, and random access by record index, making it ideal for machine learning workloads and large-scale data processing.
 
 .. image:: https://img.shields.io/pypi/v/array-record-python.svg
    :target: https://pypi.org/project/array-record-python/

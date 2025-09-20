@@ -16,9 +16,9 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'ArrayRecord Python'
-copyright = '2024, ArrayRecord Python Contributors'
-author = 'ArrayRecord Python Contributors'
+project = 'ArrayRecord'
+copyright = '2024, ArrayRecord Contributors'
+author = 'ArrayRecord Contributors'
 
 # The full version, including alpha/beta/rc tags
 release = '0.8.1'
@@ -52,31 +52,44 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# HTML title and other metadata
+html_title = "ArrayRecord Documentation"
+html_short_title = "ArrayRecord"
+
+# Favicon and logo
+# html_favicon = '_static/favicon.ico'
+# html_logo = '_static/logo.png'
+
+# Show source link
+html_show_sourcelink = True
+html_show_sphinx = False
+html_show_copyright = True
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    'canonical_url': '',
-    'analytics_id': '',
-    'logo_only': False,
-    'display_version': True,
-    'prev_next_buttons_location': 'bottom',
-    'style_external_links': False,
-    'vcs_pageview_mode': '',
-    'style_nav_header_background': 'white',
-    # Toc options
-    'collapse_navigation': True,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
-    'includehidden': True,
-    'titles_only': False
+    "sidebar_hide_name": False,
+    "light_css_variables": {
+        "color-brand-primary": "#2980B9",
+        "color-brand-content": "#2980B9",
+        "color-admonition-background": "transparent",
+    },
+    "dark_css_variables": {
+        "color-brand-primary": "#79afd1",
+        "color-brand-content": "#79afd1",
+        "color-admonition-background": "transparent",
+    },
+    "source_repository": "https://github.com/bzantium/array_record/",
+    "source_branch": "main",
+    "source_directory": "docs/",
 }
 
 # -- Extension configuration -------------------------------------------------

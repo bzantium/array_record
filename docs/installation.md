@@ -2,7 +2,7 @@
 
 ## Requirements
 
-ArrayRecord Python requires Python 3.10 or later and is available for the following platforms:
+ArrayRecord requires Python 3.10 or later and is available for the following platforms:
 
 | Platform | x86_64 | aarch64 |
 |----------|--------|---------|
@@ -12,7 +12,7 @@ ArrayRecord Python requires Python 3.10 or later and is available for the follow
 
 ## Basic Installation
 
-Install ArrayRecord Python from PyPI:
+Install ArrayRecord from PyPI:
 
 ```bash
 pip install array-record-python
