@@ -14,6 +14,85 @@ ArrayRecord's performance characteristics depend on several factors:
 
 ## Configuration for Different Use Cases
 
+### Writer Configuration
+
+The writer configuration significantly impacts both file size and read performance. Choose the right settings based on your access patterns:
+
+#### Maximum Random Access Performance
+
+Use `group_size:1` for applications requiring ultra-fast random access:
+
+```python
+from array_record.python import array_record_module
+
+# Ultra-fast random access (larger file size)
+writer = array_record_module.ArrayRecordWriter(
+    'random_access.array_record', 
+    'group_size:1'
+)
+
+# Each record is stored individually for instant access
+for i in range(10000):
+    data = f"Record {i}".encode('utf-8')
+    writer.write(data)
+writer.close()
+
+# Benefits:
+# - Zero decompression overhead for random access
+# - Constant-time record retrieval O(1)
+# - Ideal for ML training with random sampling
+# 
+# Trade-offs:
+# - Larger file size (no compression grouping)
+# - Higher memory usage for index
+```
+
+#### Balanced Performance
+
+Use moderate group sizes for balanced performance:
+
+```python
+# Balanced performance and compression
+writer = array_record_module.ArrayRecordWriter(
+    'balanced.array_record', 
+    'group_size:100,brotli:6'
+)
+
+# Benefits:
+# - Good compression ratio
+# - Reasonable random access performance
+# - Lower memory usage
+```
+
+#### Maximum Compression
+
+Use large group sizes for storage-optimized scenarios:
+
+```python
+# Maximum compression (slower random access)
+writer = array_record_module.ArrayRecordWriter(
+    'compressed.array_record', 
+    'group_size:1000,brotli:9'
+)
+
+# Benefits:
+# - Smallest file size
+# - Best for archival storage
+# - Efficient for sequential access
+#
+# Trade-offs:
+# - Slower random access (must decompress groups)
+# - Higher CPU usage during reads
+```
+
+#### Configuration Comparison
+
+| Configuration | File Size | Random Access | Sequential | Use Case |
+|---------------|-----------|---------------|------------|----------|
+| `group_size:1` | Largest | Fastest | Fast | ML training, real-time |
+| `group_size:100,brotli:6` | Medium | Good | Fast | General purpose |
+| `group_size:1000,brotli:9` | Smallest | Slower | Fastest | Archival, batch processing |
+
 ### Sequential Access (Default)
 
 Optimized for reading records in order:

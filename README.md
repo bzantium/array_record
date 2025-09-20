@@ -1,4 +1,4 @@
-# ArrayRecord Python - High-Performance Data Storage for ML
+# ArrayRecord - High-Performance Data Storage for ML
 
 [![PyPI version](https://badge.fury.io/py/array-record-python.svg)](https://badge.fury.io/py/array-record-python)
 [![Python](https://img.shields.io/pypi/pyversions/array-record-python.svg)](https://pypi.org/project/array-record-python/)
@@ -41,8 +41,16 @@ ArrayRecord provides a simple and intuitive API for high-performance data storag
 ```python
 from array_record.python import array_record_module, array_record_data_source
 
-# Writing data
+# Writing data with default settings
 writer = array_record_module.ArrayRecordWriter('dataset.array_record')
+for i in range(1000):
+    data = f"Record {i}".encode('utf-8')
+    writer.write(data)
+writer.close()
+
+# Writing data with optimized settings for random access
+# group_size:1 enables maximum random access performance by storing each record individually
+writer = array_record_module.ArrayRecordWriter('random_access_dataset.array_record', 'group_size:1')
 for i in range(1000):
     data = f"Record {i}".encode('utf-8')
     writer.write(data)
@@ -90,6 +98,74 @@ reader_options = {
     'max_parallelism': '8'
 }
 ```
+
+## ⚙️ Writer Configuration Options
+
+ArrayRecord provides flexible configuration options to optimize performance for different use cases:
+
+```python
+from array_record.python import array_record_module
+
+# Default configuration (balanced performance)
+writer = array_record_module.ArrayRecordWriter('default.array_record')
+
+# Maximum random access performance
+# group_size:1 stores each record individually for fastest random access
+writer = array_record_module.ArrayRecordWriter(
+    'random_access.array_record', 
+    'group_size:1'
+)
+
+# High compression with larger groups
+# group_size:1000 groups records together for better compression
+writer = array_record_module.ArrayRecordWriter(
+    'compressed.array_record', 
+    'group_size:1000,brotli:9'
+)
+
+# Custom configuration examples
+configs = {
+    # Ultra-fast random access (larger file size)
+    'random_access': 'group_size:1',
+    
+    # Balanced performance and compression
+    'balanced': 'group_size:100,brotli:6',
+    
+    # Maximum compression (slower random access)
+    'max_compression': 'group_size:1000,brotli:9',
+    
+    # Fast compression
+    'fast_compression': 'group_size:500,zstd:3',
+    
+    # No compression (fastest write, largest size)
+    'uncompressed': 'group_size:100,uncompressed',
+}
+
+# Example usage with different configurations
+for config_name, options in configs.items():
+    writer = array_record_module.ArrayRecordWriter(
+        f'{config_name}.array_record', 
+        options
+    )
+    for i in range(1000):
+        data = f"Record {i} for {config_name}".encode('utf-8')
+        writer.write(data)
+    writer.close()
+    print(f"Created {config_name}.array_record with options: {options}")
+```
+
+### Configuration Parameters
+
+- **`group_size`**: Number of records per group
+  - `group_size:1` - Maximum random access speed, larger file size
+  - `group_size:100` - Balanced performance (default-like behavior)
+  - `group_size:1000` - Better compression, slower random access
+
+- **Compression options**:
+  - `brotli:1-11` - Brotli compression (higher = better compression, slower)
+  - `zstd:1-22` - Zstandard compression (fast compression/decompression)
+  - `snappy` - Very fast compression with moderate ratio
+  - `uncompressed` - No compression (fastest write/read)
 
 ## 📊 Apache Beam Integration
 
@@ -424,6 +500,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ---
 
-**ArrayRecord Python** - Making high-performance data storage accessible for machine learning workflows.
+**ArrayRecord** - Making high-performance data storage accessible for machine learning workflows.
 
 *Star ⭐ this repository if you find it useful!*

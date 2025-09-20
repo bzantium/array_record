@@ -21,6 +21,49 @@ for i in range(1000):
 writer.close()
 ```
 
+### Writer Configuration Options
+
+ArrayRecord allows you to configure the writer for different performance characteristics:
+
+```python
+from array_record.python import array_record_module
+
+# Maximum random access performance
+# group_size:1 stores each record individually for fastest random access
+writer = array_record_module.ArrayRecordWriter(
+    'random_access.array_record', 
+    'group_size:1'
+)
+for i in range(1000):
+    data = f"Record {i}".encode('utf-8')
+    writer.write(data)
+writer.close()
+
+# High compression configuration
+# group_size:1000 groups records together for better compression
+writer = array_record_module.ArrayRecordWriter(
+    'compressed.array_record', 
+    'group_size:1000,brotli:9'
+)
+for i in range(1000):
+    data = f"Record {i}".encode('utf-8')
+    writer.write(data)
+writer.close()
+```
+
+**Key Configuration Parameters:**
+
+- **`group_size:N`**: Number of records per group
+  - `group_size:1` - Maximum random access speed (larger file size)
+  - `group_size:100` - Balanced performance (recommended default)
+  - `group_size:1000` - Better compression (slower random access)
+
+- **Compression Options:**
+  - `brotli:1-11` - Brotli compression (higher = better compression)
+  - `zstd:1-22` - Zstandard compression (fast compression/decompression)
+  - `snappy` - Very fast compression with moderate ratio
+  - `uncompressed` - No compression (fastest write/read)
+
 ### Reading ArrayRecord Files
 
 ```python
