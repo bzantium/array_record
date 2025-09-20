@@ -10,3 +10,13 @@ bazel-out
 bazel-testlogs
 
 MODULE.bazel.lock
+# Python packaging
+dist/
+build/
+*.egg-info/
+
+# Documentation builds
+docs/_build/
+
+# Backup files
+*.bak

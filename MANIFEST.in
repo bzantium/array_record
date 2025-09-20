@@ -1,0 +1,45 @@
+# Include the README and license
+include README.md
+include LICENSE
+include CONTRIBUTING.md
+
+# Include the C++ shared libraries
+recursive-include array_record *.so
+
+# Include Python source files
+recursive-include array_record *.py
+
+# Include build files
+include pyproject.toml
+include setup.py
+include MODULE.bazel
+include BUILD
+
+# Include documentation
+recursive-include docs *.md *.rst *.py *.txt Makefile
+include docs/build_docs.py
+
+# Include test data
+recursive-include python/testdata *
+
+# Include Beam examples
+recursive-include beam/examples *
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *~
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude *.bak
+global-exclude *.swp
+global-exclude *.orig
+
+# Exclude build directories
+prune build
+prune dist
+prune *.egg-info
+prune .pytest_cache
+prune __pycache__
+prune .tox
+prune docs/_build
